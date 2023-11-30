@@ -23,7 +23,7 @@ def pascal_triangle(n):
         pascal = [1]
 
         if i > 0:
-            for j in range(1, len(temp) - 1):  # Adjust loop range
+            for j in range(1, len(temp) - 1):
                 pascal.append(temp[j] + temp[j + 1])
 
         temp = [0] + pascal + [0]
