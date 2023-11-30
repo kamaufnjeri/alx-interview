@@ -12,7 +12,7 @@ we use the second list to add the two items together
 
 
 def pascal_triangle(n):
-    """The function to use"""
+    """The function to use for pascal's triangle"""
     if n <= 0:
         return []
 
