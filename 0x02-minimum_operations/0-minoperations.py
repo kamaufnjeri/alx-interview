@@ -8,13 +8,21 @@ the fewest number of operations needed to result in exactly n H characters in th
 
 
 def minOperations(n):
-    def dfs(current, steps):
-        if current == 1:
-            return steps
-        result = float('inf')
-        for i in range(1, current):
-            if current % i == 0:
-                result = min(result, dfs(current // i, steps + i))
-        return result
+    """
+    minOperations
+    Gets fewest # of operations needed to result in exactly n H characters
+    """
+    if n < 2:
+        return 0
 
-    return dfs(n, 0)
+    total_operations = 0
+    divisor = 2
+
+    while n > 1:
+        if n % divisor == 0:
+            total_operations += divisor
+            n //= divisor
+        else:
+            divisor += 1
+
+    return total_operations
