@@ -10,7 +10,7 @@ def print_msg(dict_sc, total_file_size):
         dict_sc: dict of status codes
         total_file_size: total of the file
     Returns:
-        Nothing
+        Nothing.
     """
 
     print("File size: {}".format(total_file_size))
