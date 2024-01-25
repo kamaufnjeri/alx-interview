@@ -1,37 +1,35 @@
 #!/usr/bin/python3
-'''a script that reads stdin line by line and computes metrics'''
+"""This script reads lines from stdin in this format
+<IP Address> - [<date>] "GET /projects/260 HTTP/1.1" <status code> <file size>
+and after every 10 lines or keyboard interruption
+it prints File size: <total size>
+<status code>: <number> for every status code"""
 
+from sys import stdin
 
-import sys
-
-cache = {'200': 0, '301': 0, '400': 0, '401': 0,
-         '403': 0, '404': 0, '405': 0, '500': 0}
-total_size = 0
-counter = 0
 
 try:
-    for line in sys.stdin:
-        line_list = line.split(" ")
-        if len(line_list) > 4:
-            code = line_list[-2]
-            size = int(line_list[-1])
-            if code in cache.keys():
-                cache[code] += 1
-            total_size += size
-            counter += 1
-
-        if counter == 10:
-            counter = 0
-            print('File size: {}'.format(total_size))
-            for key, value in sorted(cache.items()):
-                if value != 0:
-                    print('{}: {}'.format(key, value))
-
-except Exception as err:
+    my_dict = {}
+    total_size = 0
+    for i, line in enumerate(stdin, start=1):
+        parts = line.split(" ")
+        try:
+            total_size += int(parts[-1])
+            status = int(parts[-2])
+            if status not in my_dict:
+                my_dict[status] = 1
+            else:
+                my_dict[status] += 1
+        except (ValueError, IndexError):
+            continue
+        my_dict = dict(sorted(my_dict.items()))
+        if i % 10 == 0:
+            print("File size: {}".format(total_size))
+            for key, val in my_dict.items():
+                print("{}: {}".format(key, val))
+except KeyboardInterrupt:
     pass
-
 finally:
-    print('File size: {}'.format(total_size))
-    for key, value in sorted(cache.items()):
-        if value != 0:
-            print('{}: {}'.format(key, value))
+    print("File size: {}".format(total_size))
+    for key, val in my_dict.items():
+        print("{}: {}".format(key, val))
