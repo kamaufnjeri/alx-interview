@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Script for parsing HTTP request logs and computing metrics.
+"""Script for parsing HTTP request logs and computing metrics
 """
 
 from sys import stdin
