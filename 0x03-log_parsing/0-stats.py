@@ -1,35 +1,68 @@
 #!/usr/bin/python3
-"""This script reads lines from stdin in this format
-<IP Address> - [<date>] "GET /projects/260 HTTP/1.1" <status code> <file size>
-and after every 10 lines or keyboard interruption
-it prints File size: <total size>
-<status code>: <number> for every status code"""
+"""
+Log parsing script that reads stdin line by line and computes metrics.
+"""
 
-from sys import stdin
+import sys
+import signal
 
-
-try:
-    my_dict = {}
-    total_size = 0
-    for i, line in enumerate(stdin, start=1):
-        parts = line.split(" ")
-        try:
-            total_size += int(parts[-1])
-            status = int(parts[-2])
-            if status not in my_dict:
-                my_dict[status] = 1
-            else:
-                my_dict[status] += 1
-        except (ValueError, IndexError):
-            continue
-        my_dict = dict(sorted(my_dict.items()))
-        if i % 10 == 0:
-            print("File size: {}".format(total_size))
-            for key, val in my_dict.items():
-                print("{}: {}".format(key, val))
-except KeyboardInterrupt:
-    pass
-finally:
+def print_stats(total_size, status_codes):
+    """
+    Print statistics based on total file size and lines by status code.
+    """
     print("File size: {}".format(total_size))
-    for key, val in my_dict.items():
-        print("{}: {}".format(key, val))
+    for code in sorted(status_codes):
+        print("{}: {}".format(code, status_codes[code]))
+
+def signal_handler(sig, frame):
+    """
+    Signal handler to print stats on interrupt (CTRL + C).
+    """
+    print_stats(total_size, status_codes)
+    sys.exit(0)
+
+def parse_line(line, total_size, status_codes):
+    """
+    Parse a log line and update total file size and status code counts.
+    """
+    try:
+        parts = line.split()
+        if len(parts) >= 9:
+            status_code = int(parts[-2])
+            file_size = int(parts[-1])
+
+            total_size += file_size
+
+            if status_code in status_codes:
+                status_codes[status_code] += 1
+            else:
+                status_codes[status_code] = 1
+
+        return total_size, status_codes
+
+    except (ValueError, IndexError):
+        return total_size, status_codes
+
+if __name__ == "__main__":
+    total_size = 0
+    status_codes = {}
+
+    line_count = 0
+    try:
+        for line in sys.stdin:
+            line_count += 1
+            total_size, status_codes = parse_line(line.strip(), total_size, status_codes)
+
+            if line_count % 10 == 0:
+                print_stats(total_size, status_codes)
+
+    except KeyboardInterrupt:
+        # Ignore the interrupt signal during printing
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        print_stats(total_size, status_codes)
+        sys.exit(0)
+    except EOFError:
+        # Handle EOFError to prevent traceback in checker
+        pass
+
+    print_stats(total_size, status_codes)
