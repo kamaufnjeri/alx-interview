@@ -1,68 +1,86 @@
 #!/usr/bin/python3
-"""
-Log parsing script that reads stdin line by line and computes metrics.
-"""
+'''Script for parsing HTTP request logs and computing metrics.
+'''
 
-import sys
-import signal
+import re
 
-def print_stats(total_size, status_codes):
-    """
-    Print statistics based on total file size and lines by status code.
-    """
-    print("File size: {}".format(total_size))
-    for code in sorted(status_codes):
-        print("{}: {}".format(code, status_codes[code]))
 
-def signal_handler(sig, frame):
-    """
-    Signal handler to print stats on interrupt (CTRL + C).
-    """
-    print_stats(total_size, status_codes)
-    sys.exit(0)
+def extract_log_info(log_line):
+    '''Extracts sections of a line from an HTTP request log.'''
+    log_pattern = (
+        r'\s*(?P<ip>\S+)\s*',
+        r'\s*\[(?P<date>\d+\-\d+\-\d+ \d+:\d+:\d+\.\d+)\]',
+        r'\s*"(?P<request>[^"]*)"\s*',
+        r'\s*(?P<status_code>\S+)',
+        r'\s*(?P<file_size>\d+)'
+    )
+    log_format = '{}\\-{}{}{}{}\\s*'.format(*log_pattern)
+    match = re.fullmatch(log_format, log_line)
+    info = {
+        'status_code': 0,
+        'file_size': 0,
+    }
+    if match is not None:
+        status_code = match.group('status_code')
+        file_size = int(match.group('file_size'))
+        info['status_code'] = status_code
+        info['file_size'] = file_size
+    return info
 
-def parse_line(line, total_size, status_codes):
-    """
-    Parse a log line and update total file size and status code counts.
-    """
-    try:
-        parts = line.split()
-        if len(parts) >= 9:
-            status_code = int(parts[-2])
-            file_size = int(parts[-1])
 
-            total_size += file_size
+def print_metrics(total_size, status_codes):
+    '''Prints the accumulated metrics of the HTTP request log.'''
+    print('Total file size: {:d}'.format(total_size), flush=True)
+    for code in sorted(status_codes.keys()):
+        count = status_codes.get(code, 0)
+        if count > 0:
+            print('{:s}: {:d}'.format(code, count), flush=True)
 
-            if status_code in status_codes:
-                status_codes[status_code] += 1
-            else:
-                status_codes[status_code] = 1
 
-        return total_size, status_codes
+def update_metrics(line, total_size, status_codes):
+    '''Updates the metrics from a given HTTP request log.
 
-    except (ValueError, IndexError):
-        return total_size, status_codes
+    Args:
+        line (str): The line of input from which to retrieve the metrics.
 
-if __name__ == "__main__":
-    total_size = 0
-    status_codes = {}
+    Returns:
+        int: The new total file size.
+    '''
+    line_info = extract_log_info(line)
+    status_code = line_info.get('status_code', '0')
+    if status_code in status_codes.keys():
+        status_codes[status_code] += 1
+    return total_size + line_info['file_size']
 
+
+def run():
+    '''Starts the log parser.'''
     line_count = 0
+    total_file_size = 0
+    status_codes_stats = {
+        '200': 0,
+        '301': 0,
+        '400': 0,
+        '401': 0,
+        '403': 0,
+        '404': 0,
+        '405': 0,
+        '500': 0,
+    }
     try:
-        for line in sys.stdin:
+        while True:
+            log_line = input()
+            total_file_size = update_metrics(
+                log_line,
+                total_file_size,
+                status_codes_stats,
+            )
             line_count += 1
-            total_size, status_codes = parse_line(line.strip(), total_size, status_codes)
-
             if line_count % 10 == 0:
-                print_stats(total_size, status_codes)
+                print_metrics(total_file_size, status_codes_stats)
+    except (KeyboardInterrupt, EOFError):
+        print_metrics(total_file_size, status_codes_stats)
 
-    except KeyboardInterrupt:
-        # Ignore the interrupt signal during printing
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-        print_stats(total_size, status_codes)
-        sys.exit(0)
-    except EOFError:
-        # Handle EOFError to prevent traceback in checker
-        pass
 
-    print_stats(total_size, status_codes)
+if __name__ == '__main__':
+    run()
