@@ -1,49 +1,43 @@
 #!/usr/bin/python3
-"""HTTP Log Parser
-
-This script reads lines from stdin in the specified format and computes metrics.
-
-Format: <IP Address> - [<date>] "GET /projects/260 HTTP/1.1" <status code> <file size>
-
-After every 10 lines or keyboard interruption, it prints:
-- Total File Size: <total size>
-- Status Code Counts: <status code>: <number> for every status code
-"""
+"""This script reads lines from stdin in the specified format
+<IP Address> - [<date>] "GET /projects/260 HTTP/1.1" <status code> <file size>
+and after every 10 lines or keyboard interruption,
+it prints File size: <total size>
+<status code>: <number> for every status code"""
 
 from sys import stdin
 
 try:
-    status_counts = {}
-    accumulated_size = 0
+    status_code_count = {}
+    total_file_size = 0
 
-    for line_number, log_line in enumerate(stdin, start=1):
-        log_parts = log_line.split(" ")
+    for line_num, line in enumerate(stdin, start=1):
+        line_parts = line.split(" ")
 
         try:
-            file_size = int(log_parts[-1])
-            status_code = int(log_parts[-2])
+            file_size = int(line_parts[-1])
+            status = int(line_parts[-2])
 
-            accumulated_size += file_size
+            total_file_size += file_size
 
-            if status_code not in status_counts:
-                status_counts[status_code] = 1
+            if status not in status_code_count:
+                status_code_count[status] = 1
             else:
-                status_counts[status_code] += 1
+                status_code_count[status] += 1
 
         except (ValueError, IndexError):
             continue
 
-        status_counts = dict(sorted(status_counts.items()))
+        status_code_count = dict(sorted(status_code_count.items()))
 
-        if line_number % 10 == 0:
-            print("Total File Size: {}".format(accumulated_size))
-            for code, count in status_counts.items():
-                print("{}: {}".format(code, count))
+        if line_num % 10 == 0:
+            print("File size: {}".format(total_file_size))
+            for key, count in status_code_count.items():
+                print("{}: {}".format(key, count))
 
 except KeyboardInterrupt:
     pass
-
 finally:
-    print("Total File Size: {}".format(accumulated_size))
-    for code, count in status_counts.items():
-        print("{}: {}".format(code, count))
+    print("File size: {}".format(total_file_size))
+    for key, count in status_code_count.items():
+        print("{}: {}".format(key, count))
