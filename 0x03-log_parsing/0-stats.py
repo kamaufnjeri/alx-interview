@@ -7,29 +7,35 @@ File size: <total size>
 
 from sys import stdin
 
-
 try:
-    my_dict = {}
+    status_counts = {}
     total_size = 0
-    for i, line in enumerate(stdin, start=1):
+
+    for line_num, line in enumerate(stdin, start=1):
         parts = line.split(" ")
+
         try:
             total_size += int(parts[-1])
-            status = int(parts[-2])
-            if status not in my_dict:
-                my_dict[status] = 1
+            status_code = int(parts[-2])
+
+            if status_code not in status_counts:
+                status_counts[status_code] = 1
             else:
-                my_dict[status] += 1
+                status_counts[status_code] += 1
+
         except (ValueError, IndexError):
             continue
-        my_dict = dict(sorted(my_dict.items()))
-        if i % 10 == 0:
+
+        status_counts = dict(sorted(status_counts.items()))
+
+        if line_num % 10 == 0:
             print("File size: {}".format(total_size))
-            for key, val in my_dict.items():
-                print("{}: {}".format(key, val))
+            for key, count in status_counts.items():
+                print("{}: {}".format(key, count))
+
 except KeyboardInterrupt:
     pass
 finally:
     print("File size: {}".format(total_size))
-    for key, val in my_dict.items():
-        print("{}: {}".format(key, val))
+    for key, count in status_counts.items():
+        print("{}: {}".format(key, count))
