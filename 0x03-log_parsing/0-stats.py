@@ -3,7 +3,7 @@
  "GET /projects/260 HTTP/1.1" <status> <size>
 Prints metrics after every 10 lines or keyboard interruption:
 File size: <total size>
-<status>: <count> for each status code"""
+<status>: <count> for each status code."""
 
 from sys import stdin
 
