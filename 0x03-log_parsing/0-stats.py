@@ -1,42 +1,35 @@
 #!/usr/bin/python3
-"""Reads lines from stdin in the format: <IP> - [<date>] "GET /projects/260 HTTP/1.1" <status> <size>
+"""Reads lines from stdin in the format: <IP> - [<date>]
+ "GET /projects/260 HTTP/1.1" <status> <size>
 Prints metrics after every 10 lines or keyboard interruption:
 File size: <total size>
 <status>: <count> for each status code"""
 
 from sys import stdin
 
+
 try:
-    status_counts = {}
+    my_dict = {}
     total_size = 0
-
-    for line_num, line in enumerate(stdin, start=1):
+    for i, line in enumerate(stdin, start=1):
         parts = line.split(" ")
-
         try:
-            file_size = int(parts[-1])
+            total_size += int(parts[-1])
             status = int(parts[-2])
-
-            total_size += file_size
-
-            if status not in status_counts:
-                status_counts[status] = 1
+            if status not in my_dict:
+                my_dict[status] = 1
             else:
-                status_counts[status] += 1
-
+                my_dict[status] += 1
         except (ValueError, IndexError):
             continue
-
-        status_counts = dict(sorted(status_counts.items()))
-
-        if line_num % 10 == 0:
+        my_dict = dict(sorted(my_dict.items()))
+        if i % 10 == 0:
             print("File size: {}".format(total_size))
-            for key, count in status_counts.items():
-                print("{}: {}".format(key, count))
-
+            for key, val in my_dict.items():
+                print("{}: {}".format(key, val))
 except KeyboardInterrupt:
     pass
 finally:
     print("File size: {}".format(total_size))
-    for key, count in status_counts.items():
-        print("{}: {}".format(key, count))
+    for key, val in my_dict.items():
+        print("{}: {}".format(key, val))
