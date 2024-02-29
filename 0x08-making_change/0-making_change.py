@@ -9,17 +9,23 @@ def makeChange(coins, total):
     """
     if total <= 0:
         return 0
-    rem = total
-    coins_count = 0
-    coin_idx = 0
+
+    remaining_amount = total
+    used_coins_count = 0
+    coin_index = 0
     sorted_coins = sorted(coins, reverse=True)
-    n = len(coins)
-    while rem > 0:
-        if coin_idx >= n:
-            return -1
-        if rem - sorted_coins[coin_idx] >= 0:
-            rem -= sorted_coins[coin_idx]
-            coins_count += 1
+    num_coins = len(coins)
+
+    while remaining_amount > 0:
+        if coin_index >= num_coins:
+            return -1  # Cannot meet total with available coins
+
+        current_coin = sorted_coins[coin_index]
+
+        if remaining_amount >= current_coin:
+            remaining_amount -= current_coin
+            used_coins_count += 1
         else:
-            coin_idx += 1
-    return coins_count
+            coin_index += 1
+
+    return used_coins_count
